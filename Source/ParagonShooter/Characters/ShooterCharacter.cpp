@@ -156,6 +156,11 @@ bool AShooterCharacter::GetIsDead() const
 	return bIsDead;
 }
 
+bool AShooterCharacter::GetSwitchWeapon() const
+{
+	return bIsSwitchingWeapon;
+}
+
 float AShooterCharacter::GetHealthPercent() const
 {
 	if (MaxHealth != 0)
@@ -170,11 +175,29 @@ void AShooterCharacter::SwitchActiveGun(int GunOrder)
 {
 	if (Guns.Num() > GunOrder)
 	{
-		if (ActiveGun != nullptr)
+		if (Guns[GunOrder] != ActiveGun)
 		{
-			ActiveGun->SetActorHiddenInGame(true);
+			LastActiveGun = ActiveGun;
+			ActiveGun = Guns[GunOrder];
+
+			bIsSwitchingWeapon = true;
+
+			// Set Boolean back after 0.2 seconds.
+			FTimerHandle SetSwitchingWeaponBoolBack;
+			GetWorld()->GetTimerManager().SetTimer(SetSwitchingWeaponBoolBack, [&]() {bIsSwitchingWeapon = false; }, 0.2f, false);
 		}
-		ActiveGun = Guns[GunOrder];
+	}
+}
+
+void AShooterCharacter::UpdateActiveGunVisibility()
+{
+	if (LastActiveGun != nullptr)
+	{
+		LastActiveGun->SetActorHiddenInGame(true);
+	}
+
+	if (ActiveGun != nullptr)
+	{
 		ActiveGun->SetActorHiddenInGame(false);
 	}
 }

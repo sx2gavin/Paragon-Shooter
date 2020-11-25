@@ -30,14 +30,20 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	void Fire();
-
+	
 	UFUNCTION(BlueprintPure)
 	bool GetIsDead() const;
+
+	UFUNCTION(BlueprintPure)
+	bool GetSwitchWeapon() const;
 
 	UFUNCTION(BlueprintPure)
 	float GetHealthPercent() const;
 
 	void SwitchActiveGun(int GunOrder);
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateActiveGunVisibility();
 
 private:
 	void MoveForward(float AxisValue);
@@ -68,10 +74,15 @@ private:
 
 	bool bIsDead = false;
 
+	bool bIsSwitchingWeapon = false;
+
 	UPROPERTY()
 	TArray<AGun*> Guns;
 
 	UPROPERTY()
 	AGun* ActiveGun;
+
+	UPROPERTY()
+	AGun* LastActiveGun;
 
 };
