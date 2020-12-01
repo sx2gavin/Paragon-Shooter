@@ -24,6 +24,11 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	float Damage = 30;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	int32 AmmoCap = 30;
+
+	int32 Ammo = 30;
+
 	UPROPERTY(EditDefaultsOnly)
 	UParticleSystem* MuzzleFlash;
 
@@ -36,6 +41,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Sounds")
 	USoundBase* ImpactSound;
 
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundBase* EmptyGunSound;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -47,6 +55,15 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void PullTrigger();
+	bool PullTrigger();
+
+	/// <summary>
+	/// Reload this gun, returns remaining ammos. 
+	/// </summary>
+	/// <param name="AvailableAmmo">All the ammo count that the character has at the moment</param>
+	/// <returns>Remaining ammo</returns>
+	int32 Reload(int32 AvailableAmmo);
+
+	int32 GetAmmoCount() const;
 
 };

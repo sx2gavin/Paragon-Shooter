@@ -35,44 +35,68 @@ void AGun::Tick(float DeltaTime)
 
 }
 
-void AGun::PullTrigger()
+bool AGun::PullTrigger()
 {
-	UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, GunMesh, TEXT("MuzzleFlashSocket"));
-	UGameplayStatics::PlaySoundAtLocation(this, ShotSound, GetActorLocation());
-
-	APawn* GunOwner = Cast<APawn>(GetOwner());
-	if (GunOwner != nullptr)
+	if (Ammo == 0)
 	{
-		AController* GunController = GunOwner->GetController();
+		UGameplayStatics::PlaySoundAtLocation(this, EmptyGunSound, GetActorLocation());
+		return false;
+	}
+	else
+	{
+		UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, GunMesh, TEXT("MuzzleFlashSocket"));
+		UGameplayStatics::PlaySoundAtLocation(this, ShotSound, GetActorLocation());
 
-		FVector ViewPointLocation;
-		FRotator ViewPointRotation;
+		Ammo--;
 
-		GunController->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
-
-		FVector EndPoint = ViewPointLocation + ViewPointRotation.Vector() * FireRange;
-
-		FHitResult Hit;
-
-		FCollisionQueryParams QueryParams;
-
-		QueryParams.AddIgnoredActor(GunOwner);
-		bool bSuccessfulHit = GetWorld()->LineTraceSingleByChannel(Hit, ViewPointLocation, EndPoint, ECC_GameTraceChannel1, QueryParams);
-
-		if (bSuccessfulHit)
+		APawn* GunOwner = Cast<APawn>(GetOwner());
+		if (GunOwner != nullptr)
 		{
-			// Spawn Particle effect
-			UGameplayStatics::SpawnEmitterAtLocation(this, ImpactFlash, Hit.Location, Hit.ImpactNormal.Rotation());
-			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, Hit.Location);
+			AController* GunController = GunOwner->GetController();
 
-			// Apply damage to the hit actor if it's a pawn
-			AActor* HitActor = Hit.GetActor();
-			FDamageEvent DamageEvent;
-			if (HitActor != nullptr)
+			FVector ViewPointLocation;
+			FRotator ViewPointRotation;
+
+			GunController->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
+
+			FVector EndPoint = ViewPointLocation + ViewPointRotation.Vector() * FireRange;
+
+			FHitResult Hit;
+
+			FCollisionQueryParams QueryParams;
+
+			QueryParams.AddIgnoredActor(GunOwner);
+			bool bSuccessfulHit = GetWorld()->LineTraceSingleByChannel(Hit, ViewPointLocation, EndPoint, ECC_GameTraceChannel1, QueryParams);
+
+			if (bSuccessfulHit)
 			{
-				HitActor->TakeDamage(Damage, DamageEvent, GunController, this);
+				// Spawn Particle effect
+				UGameplayStatics::SpawnEmitterAtLocation(this, ImpactFlash, Hit.Location, Hit.ImpactNormal.Rotation());
+				UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, Hit.Location);
+
+				// Apply damage to the hit actor if it's a pawn
+				AActor* HitActor = Hit.GetActor();
+				FDamageEvent DamageEvent;
+				if (HitActor != nullptr)
+				{
+					HitActor->TakeDamage(Damage, DamageEvent, GunController, this);
+				}
 			}
 		}
+
+		return true;
 	}
+}
+
+int32 AGun::Reload(int32 AvailableAmmo)
+{
+	int32 Refill = FMath::Min(AvailableAmmo, AmmoCap - Ammo);
+	Ammo += Refill;
+	return AvailableAmmo - Refill;
+}
+
+int32 AGun::GetAmmoCount() const
+{
+	return Ammo;
 }
 

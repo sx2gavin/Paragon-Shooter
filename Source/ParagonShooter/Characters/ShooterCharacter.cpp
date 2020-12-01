@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "ParagonShooter/Actors/Gun.h"
 #include "ParagonShooter/GameModes/KillEmAllgameMode.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AShooterCharacter::AShooterCharacter()
@@ -33,6 +34,8 @@ void AShooterCharacter::BeginPlay()
 	SwitchActiveGun(0);
 
 	Health = MaxHealth;
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AShooterCharacter::OnComponentOverlap);
 }
 
 // Called every frame
@@ -59,6 +62,7 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(TEXT("Gun 2"), IE_Pressed, this, &AShooterCharacter::ActiveGun2);
 	PlayerInputComponent->BindAction(TEXT("Gun 3"), IE_Pressed, this, &AShooterCharacter::ActiveGun3);
 	PlayerInputComponent->BindAction(TEXT("Gun 4"), IE_Pressed, this, &AShooterCharacter::ActiveGun4);
+	PlayerInputComponent->BindAction(TEXT("Reload"), IE_Pressed, this, &AShooterCharacter::Reload);
 }
 
 float AShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -130,6 +134,15 @@ void AShooterCharacter::ActiveGun4()
 	SwitchActiveGun(3);
 }
 
+void AShooterCharacter::Reload()
+{
+	if (ActiveGun != nullptr)
+	{
+		Ammo = ActiveGun->Reload(Ammo);
+		bIsReloading = true;
+	}
+}
+
 void AShooterCharacter::HandleDeath()
 {
 	// Make this character die.
@@ -143,11 +156,16 @@ void AShooterCharacter::HandleDeath()
 	SetActorEnableCollision(false);
 }
 
+void AShooterCharacter::OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Something overlapped."));
+}
+
 void AShooterCharacter::Fire()
 {
-	if (ActiveGun != nullptr)
+	if (ActiveGun != nullptr && !bIsSwitchingWeapon && !bIsReloading)
 	{
-		ActiveGun->PullTrigger();
+		bIsFiring = ActiveGun->PullTrigger();
 	}
 }
 
@@ -161,6 +179,31 @@ bool AShooterCharacter::GetSwitchWeapon() const
 	return bIsSwitchingWeapon;
 }
 
+void AShooterCharacter::SetSwitchWeapon(bool bSwitchingWeapon)
+{
+	bIsSwitchingWeapon = bSwitchingWeapon;
+}
+
+bool AShooterCharacter::GetIsFiring() const
+{
+	return bIsFiring;
+}
+
+void AShooterCharacter::SetIsFiring(bool bNewIsFiring)
+{
+	this->bIsFiring = bNewIsFiring;
+}
+
+bool AShooterCharacter::GetIsReloading() const
+{
+	return bIsReloading;
+}
+
+void AShooterCharacter::SetIsReloading(bool bNewIsReloading)
+{
+	bIsReloading = bNewIsReloading;
+}
+
 float AShooterCharacter::GetHealthPercent() const
 {
 	if (MaxHealth != 0)
@@ -169,6 +212,16 @@ float AShooterCharacter::GetHealthPercent() const
 	}
 
 	return 0.0;
+}
+
+FString AShooterCharacter::GetAmmoCountString() const
+{
+	if (ActiveGun != nullptr)
+	{
+		return FString::FromInt(ActiveGun->GetAmmoCount()) + TEXT("/") + FString::FromInt(Ammo);
+	}
+
+	return TEXT("-/-");
 }
 
 void AShooterCharacter::SwitchActiveGun(int GunOrder)
@@ -181,10 +234,6 @@ void AShooterCharacter::SwitchActiveGun(int GunOrder)
 			ActiveGun = Guns[GunOrder];
 
 			bIsSwitchingWeapon = true;
-
-			// Set Boolean back after 0.2 seconds.
-			FTimerHandle SetSwitchingWeaponBoolBack;
-			GetWorld()->GetTimerManager().SetTimer(SetSwitchingWeaponBoolBack, [&]() {bIsSwitchingWeapon = false; }, 0.2f, false);
 		}
 	}
 }

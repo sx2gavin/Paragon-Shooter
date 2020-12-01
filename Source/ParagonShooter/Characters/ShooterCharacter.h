@@ -13,6 +13,37 @@ class PARAGONSHOOTER_API AShooterCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
+private:
+	// Properties
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	int32 Ammo;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<TSubclassOf<AGun>> GunTypes;
+
+	UPROPERTY(EditDefaultsOnly)
+	float TurnRate = 100;
+
+	UPROPERTY(EditAnywhere)
+	float MaxHealth = 100;
+
+	float Health;
+
+	bool bIsDead = false;
+	bool bIsSwitchingWeapon = false;
+	bool bIsFiring = false;
+	bool bIsReloading = false;
+
+	UPROPERTY()
+	TArray<AGun*> Guns;
+
+	UPROPERTY()
+	AGun* ActiveGun;
+
+	UPROPERTY()
+	AGun* LastActiveGun;
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -37,8 +68,26 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool GetSwitchWeapon() const;
 
+	UFUNCTION(BlueprintCallable)
+	void SetSwitchWeapon(bool bSwitchingWeapon);
+
+	UFUNCTION(BlueprintPure)
+	bool GetIsFiring() const;
+	
+	UFUNCTION(BlueprintCallable)
+	void SetIsFiring(bool bNewIsFiring);
+	
+	UFUNCTION(BlueprintPure)
+	bool GetIsReloading() const;
+	
+	UFUNCTION(BlueprintCallable)
+	void SetIsReloading(bool bNewIsReloading);
+
 	UFUNCTION(BlueprintPure)
 	float GetHealthPercent() const;
+
+	UFUNCTION(BlueprintCallable)
+	FString GetAmmoCountString() const;
 
 	void SwitchActiveGun(int GunOrder);
 
@@ -59,30 +108,12 @@ private:
 	void ActiveGun3();
 	void ActiveGun4();
 
+	void Reload();
+
 	void HandleDeath();
 
-	UPROPERTY(EditDefaultsOnly)
-	TArray<TSubclassOf<AGun>> GunTypes;
+	UFUNCTION()
+	void OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
-	UPROPERTY(EditDefaultsOnly)
-	float TurnRate = 100;
-
-	UPROPERTY(EditAnywhere)
-	float MaxHealth = 100;
-
-	float Health;
-
-	bool bIsDead = false;
-
-	bool bIsSwitchingWeapon = false;
-
-	UPROPERTY()
-	TArray<AGun*> Guns;
-
-	UPROPERTY()
-	AGun* ActiveGun;
-
-	UPROPERTY()
-	AGun* LastActiveGun;
 
 };
