@@ -23,6 +23,12 @@ public:
 	// Sets default values for this actor's properties
 	APickUp();
 
+	/// <summary>
+	/// Get the center of the collider, use this to locate a good spot to display an HUD
+	/// </summary>
+	/// <returns></returns>
+	FVector GetColliderCenter();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

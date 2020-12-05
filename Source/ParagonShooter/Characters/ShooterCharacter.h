@@ -7,6 +7,7 @@
 #include "ShooterCharacter.generated.h"
 
 class AGun;
+class APickUp;
 
 UCLASS()
 class PARAGONSHOOTER_API AShooterCharacter : public ACharacter
@@ -43,6 +44,8 @@ private:
 	UPROPERTY()
 	AGun* LastActiveGun;
 
+	UPROPERTY()
+	APickUp* OverlappedPickUp;
 
 protected:
 	// Called when the game starts or when spawned
@@ -89,6 +92,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FString GetAmmoCountString() const;
 
+	APickUp* GetOverlappedPickUp() const;
+
 	void SwitchActiveGun(int GunOrder);
 
 	UFUNCTION(BlueprintCallable)
@@ -115,5 +120,7 @@ private:
 	UFUNCTION()
 	void OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
+	UFUNCTION()
+	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 };

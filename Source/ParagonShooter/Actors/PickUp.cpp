@@ -18,6 +18,18 @@ APickUp::APickUp()
 	TriggerCollider->SetupAttachment(Mesh);
 }
 
+FVector APickUp::GetColliderCenter()
+{
+	if (TriggerCollider)
+	{
+		return TriggerCollider->GetComponentLocation();
+	}
+	else
+	{
+		return GetActorLocation();
+	}
+}
+
 // Called when the game starts or when spawned
 void APickUp::BeginPlay()
 {

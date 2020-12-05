@@ -6,6 +6,7 @@
 #include "ParagonShooter/Actors/Gun.h"
 #include "ParagonShooter/GameModes/KillEmAllgameMode.h"
 #include "Components/CapsuleComponent.h"
+#include "ParagonShooter/Actors/PickUp.h"
 
 // Sets default values
 AShooterCharacter::AShooterCharacter()
@@ -35,7 +36,11 @@ void AShooterCharacter::BeginPlay()
 
 	Health = MaxHealth;
 
-	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AShooterCharacter::OnComponentOverlap);
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AShooterCharacter::OnComponentOverlap);
+		GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AShooterCharacter::OnComponentEndOverlap);
+	}
 }
 
 // Called every frame
@@ -158,7 +163,22 @@ void AShooterCharacter::HandleDeath()
 
 void AShooterCharacter::OnComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Something overlapped."));
+	APickUp* PickUp = Cast<APickUp>(OtherActor);
+	if (PickUp != nullptr)
+	{
+		OverlappedPickUp = PickUp;
+
+		UE_LOG(LogTemp, Warning, TEXT("Pick up assigned"));
+	}
+}
+
+void AShooterCharacter::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OverlappedPickUp == OtherActor)
+	{
+		OverlappedPickUp = nullptr;
+		UE_LOG(LogTemp, Warning, TEXT("Pick up cleared"));
+	}
 }
 
 void AShooterCharacter::Fire()
@@ -222,6 +242,11 @@ FString AShooterCharacter::GetAmmoCountString() const
 	}
 
 	return TEXT("-/-");
+}
+
+APickUp* AShooterCharacter::GetOverlappedPickUp() const
+{
+	return OverlappedPickUp;
 }
 
 void AShooterCharacter::SwitchActiveGun(int GunOrder)

@@ -25,6 +25,8 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	bool GetIsPlayerWinner() const;
+
+	class APickUp* GetCharacterOverlappedPickUp();
 	
 protected:
 	virtual void BeginPlay() override;
