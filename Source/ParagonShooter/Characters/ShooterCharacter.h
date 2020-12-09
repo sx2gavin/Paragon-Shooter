@@ -17,7 +17,7 @@ class PARAGONSHOOTER_API AShooterCharacter : public ACharacter
 private:
 	// Properties
 	UPROPERTY(EditAnywhere, Category = "Combat")
-	int32 Ammo;
+	int32 MaxAmmo = 300;
 
 	UPROPERTY(EditDefaultsOnly)
 	TArray<TSubclassOf<AGun>> GunTypes;
@@ -28,7 +28,12 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MaxHealth = 100;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UCameraShake> FireCameraShake;
+
 	float Health;
+
+	int32 Ammo;
 
 	bool bIsDead = false;
 	bool bIsSwitchingWeapon = false;
@@ -62,6 +67,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+	bool RestockAmmo(int32 Amount);
 
 	void Fire();
 	
@@ -114,6 +121,7 @@ private:
 	void ActiveGun4();
 
 	void Reload();
+	void Action();
 
 	void HandleDeath();
 

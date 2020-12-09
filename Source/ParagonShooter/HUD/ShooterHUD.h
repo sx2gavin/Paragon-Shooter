@@ -18,8 +18,8 @@ private:
 	UPROPERTY()
 	class AShooterPlayerController* Controller;
 
-	UPROPERTY(EditAnywhere)
-	class UTexture* EPickUpTexture;
+	UPROPERTY(EditDefaultsOnly)
+	class UFont* HUDFont;
 
 public:
 	/** The Main Draw loop for the hud.  Gets called before any messaging.  Should be subclassed */

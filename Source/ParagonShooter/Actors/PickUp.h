@@ -13,11 +13,17 @@ class PARAGONSHOOTER_API APickUp : public AActor
 	GENERATED_BODY()
 
 private:
-	UPROPERTY(EditAnywhere)
-	UStaticMeshComponent* Mesh;
-
+	
 	UPROPERTY(EditAnywhere)
 	class USphereComponent* TriggerCollider;
+
+	UPROPERTY(EditAnywhere)
+	class UStaticMeshComponent* Mesh;
+
+	UPROPERTY(EditAnywhere)
+	class URotatingMovementComponent* RotatingComponent;
+
+	bool bCanAutoPickUp = false;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -28,6 +34,11 @@ public:
 	/// </summary>
 	/// <returns></returns>
 	FVector GetColliderCenter();
+
+	/// <summary>
+	/// Perform the pick up and apply effect on the character.
+	/// </summary>
+	virtual bool PerformPickUp(class AShooterCharacter* ActionCharacter);
 
 protected:
 	// Called when the game starts or when spawned

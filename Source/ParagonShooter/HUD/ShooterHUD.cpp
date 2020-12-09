@@ -17,8 +17,7 @@ void AShooterHUD::DrawHUD()
 		{
 			FVector2D ScreenLocation;
 			Controller->ProjectWorldLocationToScreen(PickUp->GetColliderCenter(), ScreenLocation);
-			// DrawText(TEXT("E: Pick Up"), FLinearColor::White, ScreenLocation.X, ScreenLocation.Y, nullptr, 2);
-			DrawTextureSimple(EPickUpTexture, ScreenLocation.X, ScreenLocation.Y);
+			DrawText(TEXT("E: Pick Up"), FLinearColor::White, ScreenLocation.X, ScreenLocation.Y, HUDFont);
 		}
 	}
 

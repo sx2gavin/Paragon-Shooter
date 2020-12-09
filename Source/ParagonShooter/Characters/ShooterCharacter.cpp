@@ -35,6 +35,7 @@ void AShooterCharacter::BeginPlay()
 	SwitchActiveGun(0);
 
 	Health = MaxHealth;
+	Ammo = MaxAmmo;
 
 	if (GetCapsuleComponent())
 	{
@@ -68,21 +69,31 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction(TEXT("Gun 3"), IE_Pressed, this, &AShooterCharacter::ActiveGun3);
 	PlayerInputComponent->BindAction(TEXT("Gun 4"), IE_Pressed, this, &AShooterCharacter::ActiveGun4);
 	PlayerInputComponent->BindAction(TEXT("Reload"), IE_Pressed, this, &AShooterCharacter::Reload);
+	PlayerInputComponent->BindAction(TEXT("Action"), IE_Pressed, this, &AShooterCharacter::Action);
 }
 
 float AShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	Health = FMath::Clamp(Health - DamageAmount, 0.f, MaxHealth);
+	float HealthBeforeDamage = Health;
 
-	UE_LOG(LogTemp, Warning, TEXT("Current Health is %f"), Health);
+	Health = FMath::Clamp(Health - DamageAmount, 0.f, MaxHealth);
 	if (Health == 0)
 	{
 		HandleDeath();
 	}
 
-	return DamageAmount;
+	return HealthBeforeDamage - Health;
+}
+
+bool AShooterCharacter::RestockAmmo(int32 Amount)
+{
+	int32 AmmoCountBeforeRestock = Ammo;
+
+	Ammo = FMath::Clamp(Ammo + Amount, 0, MaxAmmo);
+
+	return Ammo > AmmoCountBeforeRestock;
 }
 
 void AShooterCharacter::MoveForward(float AxisValue)
@@ -148,6 +159,17 @@ void AShooterCharacter::Reload()
 	}
 }
 
+void AShooterCharacter::Action()
+{
+	if (OverlappedPickUp)
+	{
+		if (OverlappedPickUp->PerformPickUp(this))
+		{
+			OverlappedPickUp->Destroy();
+		}
+	}
+}
+
 void AShooterCharacter::HandleDeath()
 {
 	// Make this character die.
@@ -167,8 +189,6 @@ void AShooterCharacter::OnComponentOverlap(UPrimitiveComponent* OverlappedCompon
 	if (PickUp != nullptr)
 	{
 		OverlappedPickUp = PickUp;
-
-		UE_LOG(LogTemp, Warning, TEXT("Pick up assigned"));
 	}
 }
 
@@ -177,7 +197,6 @@ void AShooterCharacter::OnComponentEndOverlap(UPrimitiveComponent* OverlappedCom
 	if (OverlappedPickUp == OtherActor)
 	{
 		OverlappedPickUp = nullptr;
-		UE_LOG(LogTemp, Warning, TEXT("Pick up cleared"));
 	}
 }
 
@@ -186,6 +205,14 @@ void AShooterCharacter::Fire()
 	if (ActiveGun != nullptr && !bIsSwitchingWeapon && !bIsReloading)
 	{
 		bIsFiring = ActiveGun->PullTrigger();
+		if (bIsFiring)
+		{
+			APlayerController* MyPlayerController = GetController<APlayerController>();
+			if (MyPlayerController)
+			{
+				MyPlayerController->PlayerCameraManager->PlayCameraShake(FireCameraShake);
+			}
+		}
 	}
 }
 

@@ -4,6 +4,7 @@
 #include "PickUp.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
+#include "GameFramework/RotatingMovementComponent.h"
 
 // Sets default values
 APickUp::APickUp()
@@ -11,11 +12,14 @@ APickUp::APickUp()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	SetRootComponent(Mesh);
-
 	TriggerCollider = CreateDefaultSubobject<USphereComponent>(TEXT("Trigger Collider"));
-	TriggerCollider->SetupAttachment(Mesh);
+	SetRootComponent(TriggerCollider);
+
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	Mesh->SetupAttachment(TriggerCollider);
+
+	RotatingComponent = CreateDefaultSubobject<URotatingMovementComponent>(TEXT("Rotating Component"));
+
 }
 
 FVector APickUp::GetColliderCenter()
@@ -28,6 +32,11 @@ FVector APickUp::GetColliderCenter()
 	{
 		return GetActorLocation();
 	}
+}
+
+bool APickUp::PerformPickUp(AShooterCharacter* ActionCharacter)
+{
+	return true;
 }
 
 // Called when the game starts or when spawned
