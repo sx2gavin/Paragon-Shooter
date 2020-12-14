@@ -19,11 +19,13 @@ private:
 	float RecoverHealth = 100.f;
 
 public:
+	virtual bool CheckPickUpCondition(class AShooterCharacter* ActionCharacter) override;
+
 	/// <summary>
 	/// Heal the character for a certain amount of health. If character's health is full, don't pick up the health.
 	/// </summary>
 	/// <param name="ActionCharacter"></param>
 	/// <returns></returns>
-	virtual bool PerformPickUp(class AShooterCharacter* ActionCharacter) override;
+	virtual void PerformPickUp(class AShooterCharacter* ActionCharacter) override;
 	
 };

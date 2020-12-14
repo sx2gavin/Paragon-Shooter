@@ -19,6 +19,7 @@ private:
 	int32 RestockAmmoAmount = 90;
 
 public:
-	virtual bool PerformPickUp(AShooterCharacter* ActionCharacter) override;
+	virtual bool CheckPickUpCondition(class AShooterCharacter* ActionCharacter) override;
+	virtual void PerformPickUp(AShooterCharacter* ActionCharacter) override;
 	
 };

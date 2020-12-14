@@ -13,7 +13,6 @@ AShooterCharacter::AShooterCharacter()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
@@ -25,11 +24,7 @@ void AShooterCharacter::BeginPlay()
 
 	for (TSubclassOf<AGun> GunType : GunTypes)
 	{
-		AGun* NewGun = GetWorld()->SpawnActor<AGun>(GunType);
-		NewGun->SetOwner(this);
-		NewGun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("weapon_socket"));
-		NewGun->SetActorHiddenInGame(true);
-		Guns.Add(NewGun);
+		AddGun(GunType);
 	}
 
 	SwitchActiveGun(0);
@@ -87,6 +82,11 @@ float AShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 	return HealthBeforeDamage - Health;
 }
 
+bool AShooterCharacter::IsFullHealth()
+{
+	return Health == MaxHealth;
+}
+
 bool AShooterCharacter::RestockAmmo(int32 Amount)
 {
 	int32 AmmoCountBeforeRestock = Ammo;
@@ -94,6 +94,11 @@ bool AShooterCharacter::RestockAmmo(int32 Amount)
 	Ammo = FMath::Clamp(Ammo + Amount, 0, MaxAmmo);
 
 	return Ammo > AmmoCountBeforeRestock;
+}
+
+bool AShooterCharacter::IsFullAmmo()
+{
+	return Ammo >= MaxAmmo;
 }
 
 void AShooterCharacter::MoveForward(float AxisValue)
@@ -163,9 +168,9 @@ void AShooterCharacter::Action()
 {
 	if (OverlappedPickUp)
 	{
-		if (OverlappedPickUp->PerformPickUp(this))
+		if (OverlappedPickUp->CheckPickUpCondition(this))
 		{
-			OverlappedPickUp->Destroy();
+			OverlappedPickUp->PerformPickUp(this);
 		}
 	}
 }
@@ -178,6 +183,12 @@ void AShooterCharacter::HandleDeath()
 	AParagonShooterGameModeBase* CurrentGameMode = GetWorld()->GetAuthGameMode<AParagonShooterGameModeBase>();
 	// Call Game mode's function to remove this actor from the game and calculate win state.
 	CurrentGameMode->ActorDied(this);
+
+	for (TSubclassOf<APickUp> DropOnDeath : DropsOnDeath)
+	{
+		FVector ActorLocation = GetMesh()->GetComponentLocation();
+		GetWorld()->SpawnActor(DropOnDeath, &ActorLocation);
+	}
 
 	DetachFromControllerPendingDestroy();
 	SetActorEnableCollision(false);
@@ -276,18 +287,29 @@ APickUp* AShooterCharacter::GetOverlappedPickUp() const
 	return OverlappedPickUp;
 }
 
-void AShooterCharacter::SwitchActiveGun(int GunOrder)
+void AShooterCharacter::SwitchActiveGun(int GunIndex)
 {
-	if (Guns.Num() > GunOrder)
+	if (Guns.Num() > GunIndex)
 	{
-		if (Guns[GunOrder] != ActiveGun)
+		if (Guns[GunIndex] != ActiveGun)
 		{
 			LastActiveGun = ActiveGun;
-			ActiveGun = Guns[GunOrder];
+			ActiveGun = Guns[GunIndex];
 
 			bIsSwitchingWeapon = true;
 		}
 	}
+}
+
+int32 AShooterCharacter::AddGun(TSubclassOf<AGun> GunType)
+{
+	AGun* NewGun = GetWorld()->SpawnActor<AGun>(GunType);
+	NewGun->SetOwner(this);
+	NewGun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("weapon_socket"));
+	NewGun->SetActorHiddenInGame(true);
+	Guns.Add(NewGun);
+
+	return Guns.Num() - 1;
 }
 
 void AShooterCharacter::UpdateActiveGunVisibility()

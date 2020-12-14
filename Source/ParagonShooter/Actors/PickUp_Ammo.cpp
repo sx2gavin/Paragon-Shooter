@@ -4,14 +4,22 @@
 #include "PickUp_Ammo.h"
 #include "ParagonShooter/Characters/ShooterCharacter.h"
 
-bool APickUp_Ammo::PerformPickUp(AShooterCharacter* ActionCharacter)
+bool APickUp_Ammo::CheckPickUpCondition(AShooterCharacter* ActionCharacter)
 {
-	Super::PerformPickUp(ActionCharacter);
-
 	if (ActionCharacter != nullptr)
 	{
-		return ActionCharacter->RestockAmmo(RestockAmmoAmount);
+		return !ActionCharacter->IsFullAmmo();
 	}
 
 	return false;
+}
+
+void APickUp_Ammo::PerformPickUp(AShooterCharacter* ActionCharacter)
+{
+	if (ActionCharacter != nullptr)
+	{
+		ActionCharacter->RestockAmmo(RestockAmmoAmount);
+	}
+
+	Super::PerformPickUp(ActionCharacter);
 }

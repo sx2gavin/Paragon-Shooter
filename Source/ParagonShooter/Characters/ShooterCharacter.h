@@ -22,6 +22,9 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	TArray<TSubclassOf<AGun>> GunTypes;
 
+	UPROPERTY(EditAnywhere)
+	TArray<TSubclassOf<APickUp>> DropsOnDeath;
+
 	UPROPERTY(EditDefaultsOnly)
 	float TurnRate = 100;
 
@@ -66,9 +69,14 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual float TakeDamage(float DamageAmount,
+		struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator,
+		AActor* DamageCauser) override;
+	bool IsFullHealth();
 
 	bool RestockAmmo(int32 Amount);
+	bool IsFullAmmo();
 
 	void Fire();
 	
@@ -101,7 +109,14 @@ public:
 
 	APickUp* GetOverlappedPickUp() const;
 
-	void SwitchActiveGun(int GunOrder);
+	void SwitchActiveGun(int GunIndex);
+
+	/// <summary>
+	/// Adds a new gun to your gun stash.
+	/// </summary>
+	/// <param name="GunType"></param>
+	/// <returns>The index for this new gun as a integer</returns>
+	int32 AddGun(TSubclassOf<AGun> GunType);
 
 	UFUNCTION(BlueprintCallable)
 	void UpdateActiveGunVisibility();

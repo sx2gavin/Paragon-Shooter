@@ -4,12 +4,22 @@
 #include "PickUp_Health.h"
 #include "ParagonShooter/Characters/ShooterCharacter.h"
 
-bool APickUp_Health::PerformPickUp(AShooterCharacter* ActionCharacter)
-{
-	Super::PerformPickUp(ActionCharacter);
 
+
+bool APickUp_Health::CheckPickUpCondition(AShooterCharacter* ActionCharacter)
+{
+	if (ActionCharacter)
+	{
+		return !ActionCharacter->IsFullHealth();
+	}
+
+	return false;
+}
+
+void APickUp_Health::PerformPickUp(AShooterCharacter* ActionCharacter)
+{
 	FDamageEvent DamageEvent;
 	float HealAmount = ActionCharacter->TakeDamage(-RecoverHealth, DamageEvent, nullptr, this);
 
-	return HealAmount != 0;
+	Super::PerformPickUp(ActionCharacter);
 }

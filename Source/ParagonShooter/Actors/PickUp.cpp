@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/RotatingMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 APickUp::APickUp()
@@ -12,11 +13,14 @@ APickUp::APickUp()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	DefaultRootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Default Root Component"));
+	SetRootComponent(DefaultRootComponent);
+
 	TriggerCollider = CreateDefaultSubobject<USphereComponent>(TEXT("Trigger Collider"));
-	SetRootComponent(TriggerCollider);
+	TriggerCollider->SetupAttachment(DefaultRootComponent);
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(TriggerCollider);
+	Mesh->SetupAttachment(DefaultRootComponent);
 
 	RotatingComponent = CreateDefaultSubobject<URotatingMovementComponent>(TEXT("Rotating Component"));
 
@@ -34,9 +38,15 @@ FVector APickUp::GetColliderCenter()
 	}
 }
 
-bool APickUp::PerformPickUp(AShooterCharacter* ActionCharacter)
+bool APickUp::CheckPickUpCondition(AShooterCharacter* ActionCharacter)
 {
 	return true;
+}
+
+void APickUp::PerformPickUp(AShooterCharacter* ActionCharacter)
+{
+	UGameplayStatics::SpawnEmitterAtLocation(this, PickUpEffect, GetActorLocation());
+	Destroy();
 }
 
 // Called when the game starts or when spawned
