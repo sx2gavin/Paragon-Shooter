@@ -7,96 +7,48 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 
-// Sets default values
+
 AGun::AGun()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
-	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	RootComponent = Root;
-
-	GunMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Gun Mesh"));
-	GunMesh->SetupAttachment(RootComponent);
-
 }
 
-// Called when the game starts or when spawned
-void AGun::BeginPlay()
+void AGun::FireLoadedWeapon()
 {
-	Super::BeginPlay();
+	Super::FireLoadedWeapon();
 
-}
-
-// Called every frame
-void AGun::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
-bool AGun::PullTrigger()
-{
-	if (Ammo == 0)
+	APawn* GunOwner = Cast<APawn>(GetOwner());
+	if (GunOwner != nullptr)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, EmptyGunSound, GetActorLocation());
-		return false;
-	}
-	else
-	{
-		UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, GunMesh, TEXT("MuzzleFlashSocket"));
-		UGameplayStatics::PlaySoundAtLocation(this, ShotSound, GetActorLocation());
+		AController* GunController = GunOwner->GetController();
 
-		Ammo--;
+		FVector ViewPointLocation;
+		FRotator ViewPointRotation;
 
-		APawn* GunOwner = Cast<APawn>(GetOwner());
-		if (GunOwner != nullptr)
+		GunController->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
+
+		FVector EndPoint = ViewPointLocation + ViewPointRotation.Vector() * FireRange;
+
+		FHitResult Hit;
+
+		FCollisionQueryParams QueryParams;
+
+		QueryParams.AddIgnoredActor(GunOwner);
+		bool bSuccessfulHit = GetWorld()->LineTraceSingleByChannel(Hit, ViewPointLocation, EndPoint, ECC_GameTraceChannel1, QueryParams);
+
+		if (bSuccessfulHit)
 		{
-			AController* GunController = GunOwner->GetController();
+			// Spawn Particle effect
+			UGameplayStatics::SpawnEmitterAtLocation(this, ImpactFlash, Hit.Location, Hit.ImpactNormal.Rotation());
+			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, Hit.Location);
 
-			FVector ViewPointLocation;
-			FRotator ViewPointRotation;
-
-			GunController->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
-
-			FVector EndPoint = ViewPointLocation + ViewPointRotation.Vector() * FireRange;
-
-			FHitResult Hit;
-
-			FCollisionQueryParams QueryParams;
-
-			QueryParams.AddIgnoredActor(GunOwner);
-			bool bSuccessfulHit = GetWorld()->LineTraceSingleByChannel(Hit, ViewPointLocation, EndPoint, ECC_GameTraceChannel1, QueryParams);
-
-			if (bSuccessfulHit)
+			// Apply damage to the hit actor if it's a pawn
+			AActor* HitActor = Hit.GetActor();
+			FDamageEvent DamageEvent;
+			if (HitActor != nullptr)
 			{
-				// Spawn Particle effect
-				UGameplayStatics::SpawnEmitterAtLocation(this, ImpactFlash, Hit.Location, Hit.ImpactNormal.Rotation());
-				UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, Hit.Location);
-
-				// Apply damage to the hit actor if it's a pawn
-				AActor* HitActor = Hit.GetActor();
-				FDamageEvent DamageEvent;
-				if (HitActor != nullptr)
-				{
-					HitActor->TakeDamage(Damage, DamageEvent, GunController, this);
-				}
+				HitActor->TakeDamage(Damage, DamageEvent, GunController, this);
 			}
 		}
-
-		return true;
 	}
-}
-
-int32 AGun::Reload(int32 AvailableAmmo)
-{
-	int32 Refill = FMath::Min(AvailableAmmo, AmmoCap - Ammo);
-	Ammo += Refill;
-	return AvailableAmmo - Refill;
-}
-
-int32 AGun::GetAmmoCount() const
-{
-	return Ammo;
 }
 

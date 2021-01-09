@@ -48,7 +48,7 @@ void AShooterPlayerController::BeginPlay()
 	StartWidget->AddToPlayerScreen();
 
 	FTimerHandle StartWidgetTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(StartWidgetTimerHandle, StartWidget, &UUserWidget::RemoveFromViewport, 3);
+	GetWorld()->GetTimerManager().SetTimer(StartWidgetTimerHandle, StartWidget, &UUserWidget::RemoveFromViewport, 10);
 
 	HUDWidget = CreateWidget<UUserWidget>(this, HUDWidgetType);
 	HUDWidget->AddToViewport();

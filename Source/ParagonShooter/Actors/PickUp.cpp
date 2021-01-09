@@ -46,6 +46,7 @@ bool APickUp::CheckPickUpCondition(AShooterCharacter* ActionCharacter)
 void APickUp::PerformPickUp(AShooterCharacter* ActionCharacter)
 {
 	UGameplayStatics::SpawnEmitterAtLocation(this, PickUpEffect, GetActorLocation());
+	UGameplayStatics::PlaySoundAtLocation(this, PickUpSFX, GetActorLocation());
 	Destroy();
 }
 

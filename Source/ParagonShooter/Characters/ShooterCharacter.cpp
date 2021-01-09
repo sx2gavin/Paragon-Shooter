@@ -3,7 +3,7 @@
 
 #include "ShooterCharacter.h"
 #include "Engine/World.h"
-#include "ParagonShooter/Actors/Gun.h"
+#include "ParagonShooter/Actors/Weapon.h"
 #include "ParagonShooter/GameModes/KillEmAllgameMode.h"
 #include "Components/CapsuleComponent.h"
 #include "ParagonShooter/Actors/PickUp.h"
@@ -22,12 +22,12 @@ void AShooterCharacter::BeginPlay()
 
 	GetMesh()->HideBoneByName(TEXT("weapon_r"), EPhysBodyOp::PBO_None);
 
-	for (TSubclassOf<AGun> GunType : GunTypes)
+	for (TSubclassOf<AWeapon> WeaponType : WeaponTypes)
 	{
-		AddGun(GunType);
+		AddWeapon(WeaponType);
 	}
 
-	SwitchActiveGun(0);
+	SwitchActiveWeapon(0);
 
 	Health = MaxHealth;
 	Ammo = MaxAmmo;
@@ -59,10 +59,10 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis(TEXT("LookRightRate"), this, &AShooterCharacter::LookRightRate);
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &AShooterCharacter::Fire);
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction(TEXT("Gun 1"), IE_Pressed, this, &AShooterCharacter::ActiveGun1);
-	PlayerInputComponent->BindAction(TEXT("Gun 2"), IE_Pressed, this, &AShooterCharacter::ActiveGun2);
-	PlayerInputComponent->BindAction(TEXT("Gun 3"), IE_Pressed, this, &AShooterCharacter::ActiveGun3);
-	PlayerInputComponent->BindAction(TEXT("Gun 4"), IE_Pressed, this, &AShooterCharacter::ActiveGun4);
+	PlayerInputComponent->BindAction(TEXT("Gun 1"), IE_Pressed, this, &AShooterCharacter::ActiveWeapon1);
+	PlayerInputComponent->BindAction(TEXT("Gun 2"), IE_Pressed, this, &AShooterCharacter::ActiveWeapon2);
+	PlayerInputComponent->BindAction(TEXT("Gun 3"), IE_Pressed, this, &AShooterCharacter::ActiveWeapon3);
+	PlayerInputComponent->BindAction(TEXT("Gun 4"), IE_Pressed, this, &AShooterCharacter::ActiveWeapon4);
 	PlayerInputComponent->BindAction(TEXT("Reload"), IE_Pressed, this, &AShooterCharacter::Reload);
 	PlayerInputComponent->BindAction(TEXT("Action"), IE_Pressed, this, &AShooterCharacter::Action);
 }
@@ -135,32 +135,37 @@ void AShooterCharacter::LookRightRate(float AxisValue)
 	AddControllerYawInput(RotateAmount);
 }
 
-void AShooterCharacter::ActiveGun1()
+void AShooterCharacter::ActiveWeapon1()
 {
-	SwitchActiveGun(0);
+	SwitchActiveWeapon(0);
 }
 
-void AShooterCharacter::ActiveGun2()
+void AShooterCharacter::ActiveWeapon2()
 {
-	SwitchActiveGun(1);
+	SwitchActiveWeapon(1);
 }
 
-void AShooterCharacter::ActiveGun3()
+void AShooterCharacter::ActiveWeapon3()
 {
-	SwitchActiveGun(2);
+	SwitchActiveWeapon(2);
 }
 
-void AShooterCharacter::ActiveGun4()
+void AShooterCharacter::ActiveWeapon4()
 {
-	SwitchActiveGun(3);
+	SwitchActiveWeapon(3);
 }
 
 void AShooterCharacter::Reload()
 {
-	if (ActiveGun != nullptr)
+	if (ActiveWeapon != nullptr)
 	{
-		Ammo = ActiveGun->Reload(Ammo);
-		bIsReloading = true;
+		int32 OldAmmoCount = Ammo;
+		Ammo = ActiveWeapon->Reload(Ammo);
+
+		if (Ammo != OldAmmoCount)
+		{
+			bIsReloading = true;
+		}
 	}
 }
 
@@ -213,9 +218,9 @@ void AShooterCharacter::OnComponentEndOverlap(UPrimitiveComponent* OverlappedCom
 
 void AShooterCharacter::Fire()
 {
-	if (ActiveGun != nullptr && !bIsSwitchingWeapon && !bIsReloading)
+	if (ActiveWeapon != nullptr && !bIsSwitchingWeapon && !bIsReloading)
 	{
-		bIsFiring = ActiveGun->PullTrigger();
+		bIsFiring = ActiveWeapon->PullTrigger();
 		if (bIsFiring)
 		{
 			APlayerController* MyPlayerController = GetController<APlayerController>();
@@ -274,9 +279,9 @@ float AShooterCharacter::GetHealthPercent() const
 
 FString AShooterCharacter::GetAmmoCountString() const
 {
-	if (ActiveGun != nullptr)
+	if (ActiveWeapon != nullptr)
 	{
-		return FString::FromInt(ActiveGun->GetAmmoCount()) + TEXT("/") + FString::FromInt(Ammo);
+		return FString::FromInt(ActiveWeapon->GetAmmoCount()) + TEXT("/") + FString::FromInt(Ammo);
 	}
 
 	return TEXT("-/-");
@@ -287,41 +292,41 @@ APickUp* AShooterCharacter::GetOverlappedPickUp() const
 	return OverlappedPickUp;
 }
 
-void AShooterCharacter::SwitchActiveGun(int GunIndex)
+void AShooterCharacter::SwitchActiveWeapon(int GunIndex)
 {
-	if (Guns.Num() > GunIndex)
+	if (Weapons.Num() > GunIndex)
 	{
-		if (Guns[GunIndex] != ActiveGun)
+		if (Weapons[GunIndex] != ActiveWeapon)
 		{
-			LastActiveGun = ActiveGun;
-			ActiveGun = Guns[GunIndex];
+			LastActiveWeapon = ActiveWeapon;
+			ActiveWeapon = Weapons[GunIndex];
 
 			bIsSwitchingWeapon = true;
 		}
 	}
 }
 
-int32 AShooterCharacter::AddGun(TSubclassOf<AGun> GunType)
+int32 AShooterCharacter::AddWeapon(TSubclassOf<AWeapon> WeaponType)
 {
-	AGun* NewGun = GetWorld()->SpawnActor<AGun>(GunType);
-	NewGun->SetOwner(this);
-	NewGun->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("weapon_socket"));
-	NewGun->SetActorHiddenInGame(true);
-	Guns.Add(NewGun);
+	AWeapon* NewWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponType);
+	NewWeapon->SetOwner(this);
+	NewWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("weapon_socket"));
+	NewWeapon->SetActorHiddenInGame(true);
+	Weapons.Add(NewWeapon);
 
-	return Guns.Num() - 1;
+	return Weapons.Num() - 1;
 }
 
 void AShooterCharacter::UpdateActiveGunVisibility()
 {
-	if (LastActiveGun != nullptr)
+	if (LastActiveWeapon != nullptr)
 	{
-		LastActiveGun->SetActorHiddenInGame(true);
+		LastActiveWeapon->SetActorHiddenInGame(true);
 	}
 
-	if (ActiveGun != nullptr)
+	if (ActiveWeapon != nullptr)
 	{
-		ActiveGun->SetActorHiddenInGame(false);
+		ActiveWeapon->SetActorHiddenInGame(false);
 	}
 }
 

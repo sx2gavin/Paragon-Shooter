@@ -6,7 +6,7 @@
 #include "GameFramework/Character.h"
 #include "ShooterCharacter.generated.h"
 
-class AGun;
+class AWeapon;
 class APickUp;
 
 UCLASS()
@@ -20,7 +20,7 @@ private:
 	int32 MaxAmmo = 300;
 
 	UPROPERTY(EditDefaultsOnly)
-	TArray<TSubclassOf<AGun>> GunTypes;
+	TArray<TSubclassOf<AWeapon>> WeaponTypes;
 
 	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<APickUp>> DropsOnDeath;
@@ -44,13 +44,13 @@ private:
 	bool bIsReloading = false;
 
 	UPROPERTY()
-	TArray<AGun*> Guns;
+	TArray<AWeapon*> Weapons;
 
 	UPROPERTY()
-	AGun* ActiveGun;
+	AWeapon* ActiveWeapon;
 
 	UPROPERTY()
-	AGun* LastActiveGun;
+	AWeapon* LastActiveWeapon;
 
 	UPROPERTY()
 	APickUp* OverlappedPickUp;
@@ -109,14 +109,14 @@ public:
 
 	APickUp* GetOverlappedPickUp() const;
 
-	void SwitchActiveGun(int GunIndex);
+	void SwitchActiveWeapon(int WeaponIndex);
 
 	/// <summary>
 	/// Adds a new gun to your gun stash.
 	/// </summary>
 	/// <param name="GunType"></param>
 	/// <returns>The index for this new gun as a integer</returns>
-	int32 AddGun(TSubclassOf<AGun> GunType);
+	int32 AddWeapon(TSubclassOf<AWeapon> WeaponType);
 
 	UFUNCTION(BlueprintCallable)
 	void UpdateActiveGunVisibility();
@@ -130,10 +130,10 @@ private:
 	void LookRight(float AxisValue);
 	void LookRightRate(float AxisValue);
 
-	void ActiveGun1();
-	void ActiveGun2();
-	void ActiveGun3();
-	void ActiveGun4();
+	void ActiveWeapon1();
+	void ActiveWeapon2();
+	void ActiveWeapon3();
+	void ActiveWeapon4();
 
 	void Reload();
 	void Action();

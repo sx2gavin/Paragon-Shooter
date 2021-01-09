@@ -29,6 +29,9 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	class UParticleSystem* PickUpEffect;
 
+	UPROPERTY(EditDefaultsOnly)
+	class USoundBase* PickUpSFX;
+
 	bool bCanAutoPickUp = false;
 
 public:
