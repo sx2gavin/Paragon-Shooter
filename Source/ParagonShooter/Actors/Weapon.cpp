@@ -74,3 +74,8 @@ int32 AWeapon::GetAmmoCount() const
 	return Ammo;
 }
 
+float AWeapon::GetDamage()
+{
+	return Damage;
+}
+

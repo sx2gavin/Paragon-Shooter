@@ -5,6 +5,10 @@
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "ParagonShooter/Actors/Launcher.h"
+#include "DrawDebugHelpers.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "ParagonShooter/Characters/ShooterCharacter.h"
 
 // Sets default values
 AMissile::AMissile()
@@ -27,12 +31,59 @@ void AMissile::BeginPlay()
 	Super::BeginPlay();
 	ProjectileMovement->InitialSpeed = MissileSpeed;
 	ProjectileMovement->MaxSpeed = MissileSpeed;
+
+	CapsuleCollider->OnComponentHit.AddDynamic(this, &AMissile::OnHit);
 }
 
 // Called every frame
 void AMissile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
+void AMissile::OnHit(UPrimitiveComponent* HitComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse, 
+		const FHitResult& Hit)
+{
+	if (OtherActor == GetOwner())
+	{
+		return;
+	}
+
+	ALauncher* OwnerLauncher = Cast<ALauncher>(GetOwner());
+
+	if (OwnerLauncher)
+	{
+		DrawDebugSphere(GetWorld(), Hit.Location, OwnerLauncher->GetExplosionRadius(), 10, FColor::Red, false, 3);
+
+		TArray<AActor*> HitActors;
+		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
+
+		UKismetSystemLibrary::SphereOverlapActors(GetWorld(),
+			Hit.Location,
+			OwnerLauncher->GetExplosionRadius(),
+			ObjectTypes,
+			TSubclassOf<AShooterCharacter>(),
+			TArray < AActor* >(),
+			HitActors);
+
+		FRadialDamageEvent RadialDamage;
+
+		ACharacter* Character = Cast<ACharacter>(OwnerLauncher->GetOwner());
+
+		if (Character != nullptr)
+		{
+			AController* Controller = Character->GetController();
+			
+			for (AActor* HitActor : HitActors)
+			{
+				HitActor->TakeDamage(OwnerLauncher->GetDamage(), RadialDamage, Controller, OwnerLauncher);
+			}
+		}
+	}
+
+	Destroy();
+}

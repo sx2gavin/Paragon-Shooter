@@ -70,4 +70,6 @@ public:
 	int32 Reload(int32 AvailableAmmo);
 
 	int32 GetAmmoCount() const;
+
+	float GetDamage();
 };

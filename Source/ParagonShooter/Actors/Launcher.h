@@ -23,10 +23,15 @@ private:
 	// Properties
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class AMissile> MissileType;
+
+	UPROPERTY(EditAnywhere, Category = "Properties")
+	float ExplosionRadius = 200.0f;
 	
 public:	
 	// Sets default values for this actor's properties
 	ALauncher();
+
+	float GetExplosionRadius() { return ExplosionRadius; }
 
 protected:
 	virtual void FireLoadedWeapon() override;
